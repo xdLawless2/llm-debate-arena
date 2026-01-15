@@ -1,11 +1,20 @@
 import { useState, useCallback } from 'react';
-import { Swords, Play, Square, RotateCcw, AlertCircle, Copy, Check } from 'lucide-react';
+import { Swords, Play, Square, RotateCcw, AlertCircle, Copy, Check, Sparkles, Shield, Users, Brain, Landmark, Zap, Info } from 'lucide-react';
 import { ApiKeyInput } from './components/ApiKeyInput';
 import { DebateConfig } from './components/DebateConfig';
 import { DebateMessage } from './components/DebateMessage';
 import { JudgeVerdict } from './components/JudgeVerdict';
 import { useDebate } from './hooks/useDebate';
 import './App.css';
+
+const SUGGESTED_TOPICS = [
+  { icon: Shield, label: 'AI Safety', desc: 'Should we slow down AI development?' },
+  { icon: Users, label: 'Remote Work', desc: 'Is remote work the future of employment?' },
+  { icon: Landmark, label: 'Universal Basic Income', desc: 'Should everyone receive a guaranteed income?' },
+  { icon: Brain, label: 'Brain-Computer Interfaces', desc: 'Should we embrace neural implants?' },
+  { icon: Zap, label: 'Nuclear Energy', desc: 'Is nuclear essential for clean energy?' },
+  { icon: Sparkles, label: 'Space Colonization', desc: 'Should we prioritize settling Mars?' },
+];
 
 function App() {
   const [apiKey, setApiKey] = useState(() =>
@@ -145,10 +154,17 @@ function App() {
                   className="btn primary"
                   onClick={handleStart}
                   disabled={!apiKey || !topic}
+                  title={!apiKey || !topic ? 'Enter a topic and API key to start' : ''}
                 >
                   <Play size={16} />
                   Start Debate
                 </button>
+                {!apiKey || !topic ? (
+                  <p className="btn disabled-hint">
+                    <Info size={12} />
+                    {!topic && !apiKey ? 'Enter topic & API key' : !topic ? 'Enter a topic' : 'Enter API key'}
+                  </p>
+                ) : null}
                 {hasStarted && (
                   <button className="btn secondary" onClick={resetDebate}>
                     <RotateCcw size={16} />
@@ -180,10 +196,24 @@ function App() {
           )}
 
           {!hasStarted && !error && (
-            <div className="empty-state">
-              <Swords size={48} />
-              <h2>Ready for Battle</h2>
-              <p>Configure your debate settings and click "Start Debate" to begin</p>
+            <div className="suggested-topics">
+              <div className="suggested-header">
+                <Sparkles size={20} />
+                <h2>Choose a Topic</h2>
+              </div>
+              <div className="topics-grid">
+                {SUGGESTED_TOPICS.map((topic) => (
+                  <button
+                    key={topic.label}
+                    className="topic-card"
+                    onClick={() => setTopic(topic.label)}
+                  >
+                    <topic.icon size={24} />
+                    <span className="topic-label">{topic.label}</span>
+                    <span className="topic-desc">{topic.desc}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
