@@ -199,6 +199,17 @@ body {
   transform: rotate(15deg);
 }
 
+/* ===== Light Mode Overrides ===== */
+.light-mode .sidebar {
+  background: rgba(248, 248, 248, 0.9);
+  border-color: var(--border-subtle);
+}
+
+.light-mode .arena-toolbar,
+.light-mode .phase-indicator {
+  background: rgba(248, 248, 248, 0.9);
+}
+
 .app-main {
   display: flex;
   flex: 1;
@@ -209,7 +220,7 @@ body {
 .sidebar {
   width: 320px;
   min-width: 320px;
-  background: var(--bg-elevated);
+  background: rgba(10, 10, 10, 0.8);
   border-right: 1px solid var(--border-subtle);
   padding: 1.25rem;
   overflow-y: auto;
@@ -686,7 +697,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--bg-base);
+  background: transparent;
 }
 
 .arena-toolbar {
