@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Swords, Play, Square, RotateCcw, AlertCircle, Copy, Check, Sparkles, Shield, Users, Brain, Landmark, Zap, Info } from 'lucide-react';
+import { Swords, Play, Square, RotateCcw, AlertCircle, Copy, Check, Sparkles, Shield, Users, Brain, Landmark, Zap, Info, Sun, Moon } from 'lucide-react';
 import { ApiKeyInput } from './components/ApiKeyInput';
 import { DebateConfig } from './components/DebateConfig';
 import { DebateMessage } from './components/DebateMessage';
@@ -30,6 +30,7 @@ function App() {
   const [preset, setPreset] = useState('medium');
   const [customRounds, setCustomRounds] = useState(4);
   const [copied, setCopied] = useState(false);
+  const [isLightMode, setIsLightMode] = useState(false);
 
   const {
     messages,
@@ -113,13 +114,22 @@ function App() {
   const hasStarted = messages.length > 0 || isDebating;
 
   return (
-    <div className="app">
+    <div className={`app ${isLightMode ? 'light-mode' : ''}`}>
       <header className="app-header">
-        <div className="logo">
-          <Swords size={24} />
-          <h1>LLM Debate Arena</h1>
+        <div className="header-left">
+          <div className="logo">
+            <Swords size={24} />
+            <h1>LLM Debate Arena</h1>
+          </div>
+          <p className="tagline">Watch AI models battle it out in intellectual combat</p>
         </div>
-        <p className="tagline">Watch AI models battle it out in intellectual combat</p>
+        <button
+          className="theme-toggle"
+          onClick={() => setIsLightMode(!isLightMode)}
+          title={isLightMode ? 'Switch to dark mode' : 'Switch to light mode'}
+        >
+          {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
       </header>
 
       <main className="app-main">

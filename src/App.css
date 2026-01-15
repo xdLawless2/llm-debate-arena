@@ -40,6 +40,37 @@
   --glow-judge: 0 0 20px rgba(167, 139, 250, 0.15);
 }
 
+.light-mode {
+  --bg-base: #ffffff;
+  --bg-elevated: #f8f8f8;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f0f0f0;
+  --bg-muted: #e0e0e0;
+
+  --text-primary: #111111;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+
+  --border-subtle: #e5e5e5;
+  --border-default: #d0d0d0;
+  --border-strong: #a0a0a0;
+
+  --pro-dim: rgba(0, 212, 126, 0.08);
+  --pro-border: rgba(0, 212, 126, 0.3);
+
+  --con-dim: rgba(255, 77, 106, 0.08);
+  --con-border: rgba(255, 77, 106, 0.3);
+
+  --judge-dim: rgba(167, 139, 250, 0.08);
+  --judge-border: rgba(167, 139, 250, 0.3);
+
+  --accent-dim: rgba(59, 130, 246, 0.08);
+
+  --glow-pro: 0 0 20px rgba(0, 212, 126, 0.1);
+  --glow-con: 0 0 20px rgba(255, 77, 106, 0.1);
+  --glow-judge: 0 0 20px rgba(167, 139, 250, 0.1);
+}
+
 /* ===== Base ===== */
 * {
   box-sizing: border-box;
@@ -54,10 +85,15 @@ body {
   min-height: 100vh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 #root {
   min-height: 100vh;
+}
+
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* ===== Layout ===== */
@@ -68,10 +104,14 @@ body {
   background:
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.08), transparent),
     var(--bg-base);
+  transition: background 0.3s ease;
 }
 
 .app-header {
-  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
   border-bottom: 1px solid var(--border-subtle);
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(12px);
@@ -80,10 +120,20 @@ body {
   z-index: 100;
 }
 
+.light-mode .app-header {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
 .app-header .logo {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.625rem;
 }
 
@@ -101,10 +151,40 @@ body {
 }
 
 .tagline {
-  text-align: center;
   color: var(--text-tertiary);
   font-size: 0.8125rem;
-  margin-top: 0.25rem;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
+
+.light-mode .theme-toggle {
+  background: var(--bg-subtle);
+}
+
+.theme-toggle svg {
+  transition: transform 0.2s ease;
+}
+
+.theme-toggle:hover svg {
+  transform: rotate(15deg);
 }
 
 .app-main {
