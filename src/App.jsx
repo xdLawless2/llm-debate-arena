@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { Swords, Play, Square, RotateCcw, AlertCircle, Copy, Check, Sparkles, Shield, Users, Brain, Landmark, Zap, Info, Sun, Moon } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Swords, Play, Square, RotateCcw, AlertCircle, Copy, Check, Sparkles, Shield, Users, Brain, Landmark, Zap, Info, Sun, Moon, FastForward, Pause } from 'lucide-react';
 import { ApiKeyInput } from './components/ApiKeyInput';
 import { DebateConfig } from './components/DebateConfig';
 import { DebateMessage } from './components/DebateMessage';
@@ -21,9 +21,15 @@ function App() {
     localStorage.getItem('openrouter_api_key') || ''
   );
   const [topic, setTopic] = useState('');
-  const [proModel, setProModel] = useState('anthropic/claude-opus-4.5');
-  const [conModel, setConModel] = useState('anthropic/claude-opus-4.5');
-  const [judgeModel, setJudgeModel] = useState('anthropic/claude-opus-4.5');
+  const [proModel, setProModel] = useState(() =>
+    localStorage.getItem('debate_pro_model') || 'anthropic/claude-opus-4.5'
+  );
+  const [conModel, setConModel] = useState(() =>
+    localStorage.getItem('debate_con_model') || 'anthropic/claude-opus-4.5'
+  );
+  const [judgeModel, setJudgeModel] = useState(() =>
+    localStorage.getItem('debate_judge_model') || 'anthropic/claude-opus-4.5'
+  );
   const [proThinking, setProThinking] = useState(false);
   const [conThinking, setConThinking] = useState(false);
   const [judgeThinking, setJudgeThinking] = useState(false);
@@ -31,6 +37,18 @@ function App() {
   const [customRounds, setCustomRounds] = useState(4);
   const [copied, setCopied] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('debate_pro_model', proModel);
+  }, [proModel]);
+
+  useEffect(() => {
+    localStorage.setItem('debate_con_model', conModel);
+  }, [conModel]);
+
+  useEffect(() => {
+    localStorage.setItem('debate_judge_model', judgeModel);
+  }, [judgeModel]);
 
   const {
     messages,
@@ -40,9 +58,11 @@ function App() {
     isJudging,
     verdict,
     error,
+    wasStopped,
     startDebate,
     stopDebate,
     resetDebate,
+    continueDebate,
   } = useDebate();
 
   const handleStart = () => {
@@ -60,7 +80,7 @@ function App() {
     });
   };
 
-  const formatMessagesAsMarkdown = useCallback(() => {
+  const formatMessagesAsMarkdown = useCallback((messagesForExport) => {
     let md = `# LLM Debate Arena\n\n`;
     md += `**Topic:** ${topic}\n\n`;
     md += `**PRO:** ${proModel}\n`;
@@ -78,7 +98,7 @@ function App() {
       }
     };
 
-    messages.forEach((msg) => {
+    messagesForExport.forEach((msg) => {
       const side = msg.side === 'pro' ? 'PRO' : 'CON';
       md += `## ${side} - ${getPhaseLabel(msg)}\n`;
       md += `*Model: ${msg.model}*\n\n`;
@@ -98,10 +118,10 @@ function App() {
     }
 
     return md;
-  }, [messages, verdict, topic, proModel, conModel, judgeModel]);
+  }, [verdict, topic, proModel, conModel, judgeModel]);
 
   const handleCopy = async () => {
-    const markdown = formatMessagesAsMarkdown();
+    const markdown = formatMessagesAsMarkdown(allMessages);
     await navigator.clipboard.writeText(markdown);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -111,7 +131,10 @@ function App() {
     ? [...messages, streamingMessage]
     : messages;
 
-  const hasStarted = messages.length > 0 || isDebating;
+  const hasStarted = messages.length > 0 || isDebating || wasStopped || streamingMessage;
+  const isConfigLocked = hasStarted;
+  const showPhase = currentPhase && (isDebating || wasStopped || isJudging);
+  const phaseStatus = wasStopped ? 'paused' : isJudging ? 'judging' : '';
 
   return (
     <div className={`app ${isLightMode ? 'light-mode' : ''}`}>
@@ -123,18 +146,42 @@ function App() {
           </div>
           <p className="tagline">Watch AI models battle it out in intellectual combat</p>
         </div>
-        <button
-          className="theme-toggle"
-          onClick={() => setIsLightMode(!isLightMode)}
-          title={isLightMode ? 'Switch to dark mode' : 'Switch to light mode'}
-        >
-          {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
+        <div className="header-right">
+          {hasStarted && (
+            <div className="debate-controls">
+              {showPhase && (
+                <div className={`phase-pill ${phaseStatus}`}>
+                  {wasStopped ? (
+                    <Pause size={12} />
+                  ) : (
+                    <span className="phase-dot"></span>
+                  )}
+                  <span className="phase-text">{currentPhase}</span>
+                </div>
+              )}
+              <button
+                className={`copy-icon-btn ${copied ? 'copied' : ''}`}
+                onClick={handleCopy}
+                disabled={allMessages.length === 0}
+                title={copied ? 'Copied!' : 'Copy debate as markdown'}
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+              </button>
+            </div>
+          )}
+          <button
+            className="theme-toggle"
+            onClick={() => setIsLightMode(!isLightMode)}
+            title={isLightMode ? 'Switch to dark mode' : 'Switch to light mode'}
+          >
+            {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
         <aside className="sidebar">
-          <ApiKeyInput apiKey={apiKey} setApiKey={setApiKey} />
+          <ApiKeyInput apiKey={apiKey} setApiKey={setApiKey} disabled={isConfigLocked} />
 
           <DebateConfig
             topic={topic}
@@ -155,31 +202,53 @@ function App() {
             setPreset={setPreset}
             customRounds={customRounds}
             setCustomRounds={setCustomRounds}
+            disabled={isConfigLocked}
           />
 
           <div className="controls">
             {!isDebating ? (
               <>
-                <button
-                  className="btn primary"
-                  onClick={handleStart}
-                  disabled={!apiKey || !topic}
-                  title={!apiKey || !topic ? 'Enter a topic and API key to start' : ''}
-                >
-                  <Play size={16} />
-                  Start Debate
-                </button>
-                {!apiKey || !topic ? (
-                  <p className="btn disabled-hint">
-                    <Info size={12} />
-                    {!topic && !apiKey ? 'Enter topic & API key' : !topic ? 'Enter a topic' : 'Enter API key'}
-                  </p>
-                ) : null}
-                {hasStarted && (
-                  <button className="btn secondary" onClick={resetDebate}>
-                    <RotateCcw size={16} />
-                    New Debate
-                  </button>
+                {wasStopped ? (
+                  <>
+                    <button
+                      className="btn primary"
+                      onClick={continueDebate}
+                    >
+                      <FastForward size={16} />
+                      Continue Debate
+                    </button>
+                    <button className="btn secondary" onClick={resetDebate}>
+                      <RotateCcw size={16} />
+                      New Debate
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {!hasStarted ? (
+                      <>
+                        <button
+                          className="btn primary"
+                          onClick={handleStart}
+                          disabled={!apiKey || !topic}
+                          title={!apiKey || !topic ? 'Enter a topic and API key to start' : ''}
+                        >
+                          <Play size={16} />
+                          Start Debate
+                        </button>
+                        {!apiKey || !topic ? (
+                          <p className="btn disabled-hint">
+                            <Info size={12} />
+                            {!topic && !apiKey ? 'Enter topic & API key' : !topic ? 'Enter a topic' : 'Enter API key'}
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <button className="btn secondary" onClick={resetDebate}>
+                        <RotateCcw size={16} />
+                        New Debate
+                      </button>
+                    )}
+                  </>
                 )}
               </>
             ) : (
@@ -192,19 +261,6 @@ function App() {
         </aside>
 
         <section className="arena">
-          {hasStarted && (
-            <div className="arena-toolbar">
-              <button
-                className={`copy-btn ${copied ? 'copied' : ''}`}
-                onClick={handleCopy}
-                disabled={messages.length === 0}
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? 'Copied!' : 'Copy as Markdown'}
-              </button>
-            </div>
-          )}
-
           {!hasStarted && !error && (
             <div className="suggested-topics">
               <div className="suggested-header">
@@ -234,28 +290,20 @@ function App() {
             </div>
           )}
 
-          {currentPhase && isDebating && (
-            <div className="phase-indicator">
-              <span className="phase-dot"></span>
-              {currentPhase}
-            </div>
-          )}
-
           <div className="messages-container">
             {allMessages.map((msg, index) => (
               <DebateMessage
                 key={msg.id || index}
                 message={msg}
-                isStreaming={streamingMessage?.id === msg.id}
+                isStreaming={isDebating && streamingMessage?.id === msg.id}
               />
             ))}
+            <JudgeVerdict
+              verdict={verdict}
+              judgeModel={judgeModel}
+              isJudging={isJudging}
+            />
           </div>
-
-          <JudgeVerdict
-            verdict={verdict}
-            judgeModel={judgeModel}
-            isJudging={isJudging}
-          />
         </section>
       </main>
     </div>

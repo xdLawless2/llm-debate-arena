@@ -1,7 +1,7 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export async function streamCompletion(apiKey, model, messages, onChunk, options = {}) {
-  const { thinking = false } = options;
+  const { thinking = false, signal } = options;
 
   const body = {
     model,
@@ -24,6 +24,7 @@ export async function streamCompletion(apiKey, model, messages, onChunk, options
       'X-Title': 'LLM Debate Arena',
     },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!response.ok) {
@@ -73,7 +74,7 @@ export async function streamCompletion(apiKey, model, messages, onChunk, options
 }
 
 export async function getCompletion(apiKey, model, messages, options = {}) {
-  const { thinking = false } = options;
+  const { thinking = false, signal } = options;
 
   const body = {
     model,
@@ -95,6 +96,7 @@ export async function getCompletion(apiKey, model, messages, options = {}) {
       'X-Title': 'LLM Debate Arena',
     },
     body: JSON.stringify(body),
+    signal,
   });
 
   const text = await response.text();

@@ -21,9 +21,10 @@ export function DebateConfig({
   setPreset,
   customRounds,
   setCustomRounds,
+  disabled = false,
 }) {
   return (
-    <div className="debate-config">
+    <div className={`debate-config ${disabled ? 'locked' : ''}`}>
       <div className="topic-section">
         <label>
           <MessageSquare size={14} />
@@ -33,6 +34,7 @@ export function DebateConfig({
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="Enter a debate topic, e.g., 'AI will have a net positive impact on society'"
+          disabled={disabled}
         />
       </div>
 
@@ -44,6 +46,7 @@ export function DebateConfig({
           color="pro"
           thinking={proThinking}
           onThinkingChange={setProThinking}
+          disabled={disabled}
         />
         <ModelSelector
           label="CON Debater"
@@ -52,6 +55,7 @@ export function DebateConfig({
           color="con"
           thinking={conThinking}
           onThinkingChange={setConThinking}
+          disabled={disabled}
         />
       </div>
 
@@ -63,6 +67,7 @@ export function DebateConfig({
           color="judge"
           thinking={judgeThinking}
           onThinkingChange={setJudgeThinking}
+          disabled={disabled}
         />
       </div>
 
@@ -78,6 +83,7 @@ export function DebateConfig({
               type="button"
               className={`preset-btn ${preset === key ? 'active' : ''}`}
               onClick={() => setPreset(key)}
+              disabled={disabled}
             >
               <span className="preset-name">{config.name}</span>
               <span className="preset-desc">{config.description}</span>
@@ -87,6 +93,7 @@ export function DebateConfig({
             type="button"
             className={`preset-btn ${preset === 'custom' ? 'active' : ''}`}
             onClick={() => setPreset('custom')}
+            disabled={disabled}
           >
             <span className="preset-name">Custom</span>
             <span className="preset-desc">Set your own</span>
@@ -101,6 +108,7 @@ export function DebateConfig({
               max={10}
               value={customRounds}
               onChange={(e) => setCustomRounds(parseInt(e.target.value) || 1)}
+              disabled={disabled}
             />
           </div>
         )}
