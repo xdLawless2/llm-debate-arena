@@ -7,6 +7,23 @@ import { JudgeVerdict } from './components/JudgeVerdict';
 import { useDebate } from './hooks/useDebate';
 import './App.css';
 
+const readStoredValue = (key, fallback = '') => {
+  try {
+    const value = localStorage.getItem(key);
+    return value || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const writeStoredValue = (key, value) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage failures in restricted contexts.
+  }
+};
+
 const SUGGESTED_TOPICS = [
   { icon: Shield, label: 'AI Safety', desc: 'Should we slow down AI development?' },
   { icon: Users, label: 'Remote Work', desc: 'Is remote work the future of employment?' },
@@ -18,17 +35,17 @@ const SUGGESTED_TOPICS = [
 
 function App() {
   const [apiKey, setApiKey] = useState(() =>
-    localStorage.getItem('openrouter_api_key') || ''
+    readStoredValue('openrouter_api_key', '')
   );
   const [topic, setTopic] = useState('');
   const [proModel, setProModel] = useState(() =>
-    localStorage.getItem('debate_pro_model') || 'anthropic/claude-opus-4.5'
+    readStoredValue('debate_pro_model', 'anthropic/claude-opus-4.5')
   );
   const [conModel, setConModel] = useState(() =>
-    localStorage.getItem('debate_con_model') || 'anthropic/claude-opus-4.5'
+    readStoredValue('debate_con_model', 'anthropic/claude-opus-4.5')
   );
   const [judgeModel, setJudgeModel] = useState(() =>
-    localStorage.getItem('debate_judge_model') || 'anthropic/claude-opus-4.5'
+    readStoredValue('debate_judge_model', 'anthropic/claude-opus-4.5')
   );
   const [proThinking, setProThinking] = useState(false);
   const [conThinking, setConThinking] = useState(false);
@@ -39,15 +56,19 @@ function App() {
   const [isLightMode, setIsLightMode] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('debate_pro_model', proModel);
+    writeStoredValue('openrouter_api_key', apiKey);
+  }, [apiKey]);
+
+  useEffect(() => {
+    writeStoredValue('debate_pro_model', proModel);
   }, [proModel]);
 
   useEffect(() => {
-    localStorage.setItem('debate_con_model', conModel);
+    writeStoredValue('debate_con_model', conModel);
   }, [conModel]);
 
   useEffect(() => {
-    localStorage.setItem('debate_judge_model', judgeModel);
+    writeStoredValue('debate_judge_model', judgeModel);
   }, [judgeModel]);
 
   const {
@@ -122,9 +143,16 @@ function App() {
 
   const handleCopy = async () => {
     const markdown = formatMessagesAsMarkdown(allMessages);
-    await navigator.clipboard.writeText(markdown);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard unavailable');
+      }
+      await navigator.clipboard.writeText(markdown);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
   };
 
   const allMessages = streamingMessage

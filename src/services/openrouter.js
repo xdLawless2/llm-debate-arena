@@ -1,5 +1,18 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
+const parseErrorMessage = async (response) => {
+  const text = await response.text();
+  if (!text) {
+    return `API request failed (${response.status})`;
+  }
+  try {
+    const data = JSON.parse(text);
+    return data.error?.message || data.message || text;
+  } catch {
+    return text;
+  }
+};
+
 export async function streamCompletion(apiKey, model, messages, onChunk, options = {}) {
   const { thinking = false, signal } = options;
 
@@ -28,8 +41,12 @@ export async function streamCompletion(apiKey, model, messages, onChunk, options
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'API request failed');
+    const message = await parseErrorMessage(response);
+    throw new Error(message);
+  }
+
+  if (!response.body || !response.body.getReader) {
+    throw new Error('Streaming response body unavailable');
   }
 
   const reader = response.body.getReader();
@@ -71,54 +88,4 @@ export async function streamCompletion(apiKey, model, messages, onChunk, options
   }
 
   return { content: fullContent, thinking: fullThinking };
-}
-
-export async function getCompletion(apiKey, model, messages, options = {}) {
-  const { thinking = false, signal } = options;
-
-  const body = {
-    model,
-    messages,
-  };
-
-  if (thinking) {
-    body.reasoning = {
-      effort: 'high',
-    };
-  }
-
-  const response = await fetch(OPENROUTER_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'HTTP-Referer': window.location.origin,
-      'X-Title': 'LLM Debate Arena',
-    },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  const text = await response.text();
-
-  let data;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error('Failed to parse API response');
-  }
-
-  if (!response.ok) {
-    throw new Error(data.error?.message || 'API request failed');
-  }
-
-  const message = data.choices?.[0]?.message;
-  if (!message) {
-    throw new Error('Invalid API response format');
-  }
-
-  return {
-    content: message.content || '',
-    thinking: message.reasoning || '',
-  };
 }

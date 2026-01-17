@@ -8,7 +8,6 @@ export function ApiKeyInput({ apiKey, setApiKey, disabled = false }) {
     if (disabled) return;
     const value = e.target.value;
     setApiKey(value);
-    localStorage.setItem('openrouter_api_key', value);
   };
 
   const isKeySet = apiKey && apiKey.length > 0;
