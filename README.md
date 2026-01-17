@@ -10,7 +10,7 @@ LLM Debate Arena is a client-side web app that pits two models against each othe
 - Runs fully in the browser; the API key stays in localStorage
 
 ## Screenshot
-![LLM Debate Arena screenshot](public/screenshot.svg)
+![LLM Debate Arena screenshot](screenshot.png)
 
 ## Getting started
 Prereqs: Node.js 18+ and npm.
