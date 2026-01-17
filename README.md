@@ -1,16 +1,36 @@
-# React + Vite
+# LLM Debate Arena
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+LLM Debate Arena is a client-side web app that pits two models against each other in a structured debate, then asks a judge model to score the match.
 
-Currently, two official plugins are available:
+## Features
+- Head-to-head debates with pro/con debaters and a judge
+- Preset lengths plus custom rounds
+- Streaming responses with optional reasoning
+- Copy the full transcript as Markdown
+- Runs fully in the browser; the API key stays in localStorage
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Getting started
+Prereqs: Node.js 18+ and npm.
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Open the local URL printed by Vite, then add your OpenRouter API key when prompted.
 
-## Expanding the ESLint configuration
+## Usage
+1. Get an OpenRouter API key from https://openrouter.ai/keys
+2. Paste it into the app (stored in localStorage for convenience)
+3. Enter a topic, choose models, and start the debate
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Model names follow OpenRouter routing names, for example: `anthropic/claude-opus-4.5`.
+
+## Scripts
+- `npm run dev` - start the dev server
+- `npm run build` - build for production
+- `npm run preview` - preview the production build
+- `npm run lint` - run ESLint
+
+## License
+MIT. Credit is appreciated.

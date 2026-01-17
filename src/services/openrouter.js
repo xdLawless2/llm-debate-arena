@@ -64,7 +64,7 @@ export async function streamCompletion(apiKey, model, messages, onChunk, options
           fullContent += delta.content;
           onChunk(fullContent, fullThinking);
         }
-      } catch (e) {
+      } catch {
         // Skip invalid JSON chunks
       }
     }
@@ -104,7 +104,7 @@ export async function getCompletion(apiKey, model, messages, options = {}) {
   let data;
   try {
     data = JSON.parse(text);
-  } catch (e) {
+  } catch {
     throw new Error('Failed to parse API response');
   }
 

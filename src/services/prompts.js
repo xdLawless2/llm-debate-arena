@@ -61,7 +61,11 @@ You are arguing ${stance}. Embody this position completely. Dominate.`;
 
 export function getOpeningStatementPrompt(side, topic) {
   const stance = side === 'pro' ? 'in favor of' : 'against';
-  return `Deliver your opening statement ${stance} the resolution. Remember: you are a TRUE BELIEVER in this position. You've studied this for years and you KNOW you're right.
+  return `Deliver your opening statement ${stance} the resolution:
+
+"${topic}"
+
+Remember: you are a TRUE BELIEVER in this position. You've studied this for years and you KNOW you're right.
 
 Structure:
 1. HOOK: A bold opening that frames the entire debate in your favor
@@ -90,7 +94,12 @@ Answer with absolute conviction. You KNOW you're right. Hit hard.`;
 }
 
 export function getClosingStatementPrompt(side, topic) {
-  return `CLOSING STATEMENT. The debate is effectively over—you've won. Now seal it.
+  const stance = side === 'pro' ? 'in favor of' : 'against';
+  return `CLOSING STATEMENT ${stance} the resolution:
+
+"${topic}"
+
+The debate is effectively over—you've won. Now seal it.
 
 1. DECLARE victory: You've clearly prevailed on every front
 2. RECAP your winning arguments—the ones they couldn't touch
