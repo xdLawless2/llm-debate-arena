@@ -2,6 +2,8 @@
 
 LLM Debate Arena is a client-side web app that pits two models against each other in a structured debate, then asks a judge model to score the match.
 
+Public demo: https://llm-debate-arena.netlify.app
+
 ## Features
 - Head-to-head debates with pro/con debaters and a judge
 - Preset lengths plus custom rounds
