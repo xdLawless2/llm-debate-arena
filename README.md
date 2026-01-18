@@ -31,6 +31,9 @@ Open the local URL printed by Vite, then add your OpenRouter API key when prompt
 
 Model names follow OpenRouter routing names, for example: `anthropic/claude-opus-4.5`.
 
+## Note on prompts
+The built-in system prompts are intentionally flamboyant and theatrical to make debates entertaining. They are not meant as serious guidance or best practices for truth-seeking. If you plan to use this for rigorous analysis, rework the system prompts accordingly.
+
 ## Scripts
 - `npm run dev` - start the dev server
 - `npm run build` - build for production
