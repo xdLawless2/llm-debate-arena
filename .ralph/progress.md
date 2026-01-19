@@ -257,3 +257,28 @@ Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-010053-1
   - Gotchas encountered: Dev server shifted to port 5174 when 5173 was in use.
   - Useful context: Browser verification used dev-browser; screenshot at .codex/skills/dev-browser/tmp/style-editor-sticky.png.
 ---
+## [2026-01-20 01:36:01] - US-003: Expand prompt blobs and remove nested scrolling
+Thread: 
+Run: 20260120-010053-17974 (iteration 3)
+Run log: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-010053-17974-iter-3.log
+Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-010053-17974-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 3739107 feat(style-editor): expand prompt textareas
+- Post-commit status: clean
+- Verification:
+  - Command: npm run dev -> PASS
+  - Command: npm run lint -> PASS
+  - Command: npm run typecheck -> PASS
+  - Command: npm run build -> PASS
+- Files changed:
+  - src/components/StyleEditor.jsx
+  - src/App.css
+  - .ralph/activity.log
+  - .ralph/progress.md
+- What was implemented: Expanded prompt textareas to 16/12 rows and auto-resize them to avoid nested scrollbars while keeping the editor/page scroll responsible for overflow; verified in dev-browser with screenshot at .codex/skills/dev-browser/tmp/us003-style-editor.png.
+- **Learnings for future iterations:**
+  - Patterns discovered: prompt sections render directly from `ROLE_DEFINITIONS` inside `StyleEditor`.
+  - Gotchas encountered: global `box-sizing: border-box` means autosize should add border height to scrollHeight.
+  - Useful context: Vite dev server auto-incremented to port 5175 when 5173 was occupied.
+---
