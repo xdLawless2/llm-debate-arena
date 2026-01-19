@@ -79,3 +79,30 @@ Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-1
   - Gotchas encountered: use the ralph binary in PATH instead of /Users/adityasingh/Desktop/debate/ralph.
   - Useful context: defaults fall back to flamboyant when storage is missing or invalid.
 ---
+## [2026-01-19 22:30:29] - US-004: Add per-role style selector and Styles Manager view
+Thread: 
+Run: 20260119-213615-12163 (iteration 4)
+Run log: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-12163-iter-4.log
+Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-12163-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b3f7e62 feat(styles): add per-role style selection
+- Post-commit status: clean
+- Verification:
+  - Command: npm run lint -> PASS
+  - Command: npm run typecheck -> PASS
+  - Command: npm run build -> PASS
+  - Command: npm run dev -- --host 0.0.0.0 --port 5173 -> PASS
+- Files changed:
+  - .ralph/activity.log
+  - .ralph/progress.md
+  - src/App.css
+  - src/App.jsx
+  - src/components/DebateConfig.jsx
+  - src/components/StylesManager.jsx
+- What was implemented: Added per-role style selectors with override actions plus a styles manager panel for setting defaults in the debate sidebar; captured browser checks at .codex/skills/dev-browser/tmp/debate-styles.png and .codex/skills/dev-browser/tmp/styles-manager.png.
+- **Learnings for future iterations:**
+  - Patterns discovered: style defaults are stored via src/services/styleStorage.js and can be normalized against available styles.
+  - Gotchas encountered: dev-browser server lives under .codex/skills/dev-browser and installs Playwright on first run.
+  - Useful context: style selectors are disabled using the existing isConfigLocked gating in src/App.jsx.
+---
