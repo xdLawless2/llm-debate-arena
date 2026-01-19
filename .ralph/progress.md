@@ -134,3 +134,28 @@ Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-1
   - Gotchas encountered: dev-browser server may be started from .codex/skills/dev-browser using scripts/start-server.ts if server.sh install fails.
   - Useful context: inline validation should cover name plus all role prompt fields before saving.
 ---
+## [2026-01-19 23:17:08] - US-006: Apply style prompts to debate and judge flow
+Thread: 
+Run: 20260119-213615-12163 (iteration 6)
+Run log: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-12163-iter-6.log
+Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-12163-iter-6.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: a88c98d feat(prompts): apply style prompts to debate flow
+- Post-commit status: clean
+- Verification:
+  - Command: npm run lint -> PASS
+  - Command: npm run typecheck -> PASS
+  - Command: npm run build -> PASS
+  - Command: sh -c 'npm run dev > /tmp/ralph-dev.log 2>&1 & pid=$!; sleep 3; kill $pid; wait $pid || true; cat /tmp/ralph-dev.log' -> PASS
+- Files changed:
+  - .ralph/activity.log
+  - .ralph/progress.md
+  - src/hooks/useDebate.js
+  - src/services/prompts.js
+- What was implemented: Switched debater and judge prompts to per-role style templates with placeholder rendering and style selection snapshots so resume/continue keeps the same prompts.
+- **Learnings for future iterations:**
+  - Patterns discovered: prompt templates can be rendered centrally with formatDebateHistory plus role-specific data.
+  - Gotchas encountered: vite dev server may select a new port if 5173 is occupied.
+  - Useful context: prompt lookup falls back to Flamboyant templates when style ids or fields are missing.
+---
