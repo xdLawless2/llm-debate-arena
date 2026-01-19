@@ -9,11 +9,6 @@ export const DEBATE_PRESETS = {
     description: '4 rounds',
     rounds: 4,
   },
-  long: {
-    name: 'Extended',
-    description: '6 rounds',
-    rounds: 6,
-  },
 };
 
 const TEMPLATE_TOKEN_PATTERN = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
