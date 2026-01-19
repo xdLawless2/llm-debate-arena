@@ -1,0 +1,11 @@
+# Activity Log
+
+## Run Summary
+
+## Events
+
+[2026-01-19 21:36:15] ITERATION 1 start (mode=build story=US-001)
+
+[2026-01-19 21:37:20] Start US-001: add typecheck script/config (helper missing)
+[2026-01-19 21:40:28] Added tsconfig and typecheck script; installed typescript (helper missing)
+[2026-01-19 21:40:44] Ran verification: npm run typecheck, npm run lint, npm run build (helper missing)
