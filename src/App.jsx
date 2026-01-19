@@ -69,7 +69,7 @@ function App() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [isStylesManagerOpen, setIsStylesManagerOpen] = useState(false);
 
-  const allStyles = useMemo(() => listAllStyles(), []);
+  const [allStyles, setAllStyles] = useState(() => listAllStyles());
   const styleMap = useMemo(
     () => new Map(allStyles.map((style) => [style.id, style])),
     [allStyles]
@@ -96,6 +96,25 @@ function App() {
   useEffect(() => {
     writeStoredValue('debate_judge_model', judgeModel);
   }, [judgeModel]);
+
+  useEffect(() => {
+    setStyleDefaults((prev) => {
+      const normalized = normalizeStyleSelection(prev, styleMap);
+      const hasChanged = !prev
+        || prev.proStyleId !== normalized.proStyleId
+        || prev.conStyleId !== normalized.conStyleId
+        || prev.judgeStyleId !== normalized.judgeStyleId;
+      if (hasChanged) {
+        saveStyleDefaults(normalized);
+      }
+      return normalized;
+    });
+    setStyleSelection((prev) => normalizeStyleSelection(prev, styleMap));
+  }, [styleMap]);
+
+  const refreshStyles = useCallback(() => {
+    setAllStyles(listAllStyles());
+  }, []);
 
   const handleStyleChange = useCallback((roleKey, nextStyleId) => {
     if (!styleMap.has(nextStyleId)) {
@@ -401,11 +420,13 @@ function App() {
         open={isStylesManagerOpen}
         onClose={() => setIsStylesManagerOpen(false)}
         disabled={isConfigLocked}
+        styles={allStyles}
         styleDefaults={styleDefaults}
         onSetDefaults={(roleKey, styleId) => applyStyleDefaults({
           ...styleDefaults,
           [roleKey]: styleId,
         })}
+        onStylesUpdated={refreshStyles}
       />
     </div>
   );
