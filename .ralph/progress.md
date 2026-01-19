@@ -159,3 +159,30 @@ Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-1
   - Gotchas encountered: vite dev server may select a new port if 5173 is occupied.
   - Useful context: prompt lookup falls back to Flamboyant templates when style ids or fields are missing.
 ---
+## [2026-01-19 23:38:54] - US-007: Add post-debate nudge to discover styles
+Thread: 
+Run: 20260119-213615-12163 (iteration 7)
+Run log: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-12163-iter-7.log
+Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-12163-iter-7.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d9ba8d2 feat(ui): add post-debate style nudge
+- Post-commit status: clean
+- Verification:
+  - Command: npm run lint -> PASS
+  - Command: npm run typecheck -> PASS
+  - Command: npm run build -> PASS
+  - Command: npm run dev -- --host 127.0.0.1 --port 5173 -> PASS
+- Files changed:
+  - .ralph/activity.log
+  - .ralph/progress.md
+  - src/App.css
+  - src/App.jsx
+  - src/components/DebateConfig.jsx
+  - src/components/StyleNudgeToast.jsx
+- What was implemented: Added a one-time post-debate toast with a CTA that opens the Styles Manager and pulses the style selectors; verified in dev-browser with screenshots at .codex/skills/dev-browser/tmp/style-nudge-toast.png and .codex/skills/dev-browser/tmp/style-nudge-manager.png.
+- **Learnings for future iterations:**
+  - Patterns discovered: toast visibility is gated on currentPhase 'Complete' plus non-debating states and resets when hasStarted clears.
+  - Gotchas encountered: Vite dev server may shift ports if 5173 is already in use.
+  - Useful context: highlight pulse is applied via the styles-selectors highlight class for a short timeout.
+---
