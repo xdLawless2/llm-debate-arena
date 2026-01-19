@@ -186,3 +186,27 @@ Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-1
   - Gotchas encountered: Vite dev server may shift ports if 5173 is already in use.
   - Useful context: highlight pulse is applied via the styles-selectors highlight class for a short timeout.
 ---
+## [2026-01-20 00:09:31] - US-001: Remove Extended preset and reorder Custom in Debate Length
+Thread: 
+Run: 20260120-000347-55122 (iteration 1)
+Run log: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-000347-55122-iter-1.log
+Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-000347-55122-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 98fcf02 fix(config): remove extended debate preset
+- Post-commit status: clean
+- Verification:
+  - Command: npm run dev -- --host 127.0.0.1 --port 5173 -> PASS
+  - Command: npm run lint -> PASS
+  - Command: npm run typecheck -> PASS
+  - Command: npm run build -> PASS
+- Files changed:
+  - src/services/prompts.js
+  - .ralph/activity.log
+  - .ralph/progress.md
+- What was implemented: Removed the Extended preset from debate presets so Debate Length shows Quick/Standard/Custom and Custom reveals the rounds input; verified in dev-browser (screenshot: .codex/skills/dev-browser/tmp/debate-length.png).
+- **Learnings for future iterations:**
+  - Patterns discovered: Debate Length buttons render from `DEBATE_PRESETS` plus the explicit Custom button in `DebateConfig`.
+  - Gotchas encountered: Vite dev server auto-increments the port if 5173 is in use.
+  - Useful context: Browser verification used the Vite URL on port 5174 after auto-increment.
+---
