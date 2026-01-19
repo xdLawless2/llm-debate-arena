@@ -234,3 +234,26 @@ Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-010053-1
   - Gotchas encountered: dev-browser server can fail if port 9222 is already bound; restart `./server.sh` after clearing the port.
   - Useful context: Editor height checks can use `.style-editor-panel` bounding boxes against `window.innerHeight`.
 ---
+## [2026-01-20 01:22:30] - US-002: Make editor actions always visible with a sticky action bar
+Thread: 
+Run: 20260120-010053-17974 (iteration 2)
+Run log: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-010053-17974-iter-2.log
+Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-010053-17974-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: da6bec5 feat(style-editor): keep actions visible
+- Post-commit status: clean
+- Verification:
+  - Command: npm run lint -> PASS
+  - Command: npm run typecheck -> PASS
+  - Command: npm run build -> PASS
+- Files changed:
+  - src/App.css
+  - .ralph/activity.log
+  - .ralph/progress.md
+- What was implemented: Made the style editor action bar sticky at the bottom of the editor column so Save/Cancel/Delete remain visible while scrolling.
+- **Learnings for future iterations:**
+  - Patterns discovered: Sticky footer bar works best inside the editor scroll container.
+  - Gotchas encountered: Dev server shifted to port 5174 when 5173 was in use.
+  - Useful context: Browser verification used dev-browser; screenshot at .codex/skills/dev-browser/tmp/style-editor-sticky.png.
+---
