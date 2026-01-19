@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Swords, Play, Square, RotateCcw, AlertCircle, Copy, Check, Sparkles, Shield, Users, Brain, Landmark, Zap, Info, Sun, Moon, FastForward, Pause } from 'lucide-react';
 import { ApiKeyInput } from './components/ApiKeyInput';
 import { DebateConfig } from './components/DebateConfig';
 import { DebateMessage } from './components/DebateMessage';
 import { JudgeVerdict } from './components/JudgeVerdict';
+import { StyleNudgeToast } from './components/StyleNudgeToast';
 import { StylesManager } from './components/StylesManager';
 import { useDebate } from './hooks/useDebate';
 import { DEFAULT_STYLE_DEFAULTS, getStyleDefaults, listAllStyles, saveStyleDefaults } from './services/styleStorage';
@@ -68,6 +69,12 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
   const [isStylesManagerOpen, setIsStylesManagerOpen] = useState(false);
+  const [isStyleNudgeVisible, setIsStyleNudgeVisible] = useState(false);
+  const [isStyleNudgeDismissed, setIsStyleNudgeDismissed] = useState(false);
+  const [isStyleHighlightActive, setIsStyleHighlightActive] = useState(false);
+
+  const styleNudgeShownRef = useRef(false);
+  const styleHighlightTimeoutRef = useRef(null);
 
   const [allStyles, setAllStyles] = useState(() => listAllStyles());
   const styleMap = useMemo(
@@ -112,6 +119,12 @@ function App() {
     setStyleSelection((prev) => normalizeStyleSelection(prev, styleMap));
   }, [styleMap]);
 
+  useEffect(() => () => {
+    if (styleHighlightTimeoutRef.current) {
+      clearTimeout(styleHighlightTimeoutRef.current);
+    }
+  }, []);
+
   const refreshStyles = useCallback(() => {
     setAllStyles(listAllStyles());
   }, []);
@@ -143,6 +156,27 @@ function App() {
         : current.judgeStyleId,
     }));
   }, [styleDefaults, styleMap]);
+
+  const triggerStyleHighlight = useCallback(() => {
+    setIsStyleHighlightActive(true);
+    if (styleHighlightTimeoutRef.current) {
+      clearTimeout(styleHighlightTimeoutRef.current);
+    }
+    styleHighlightTimeoutRef.current = setTimeout(() => {
+      setIsStyleHighlightActive(false);
+    }, 3200);
+  }, []);
+
+  const dismissStyleNudge = useCallback(() => {
+    setIsStyleNudgeVisible(false);
+    setIsStyleNudgeDismissed(true);
+  }, []);
+
+  const handleStyleNudgeAction = useCallback(() => {
+    setIsStylesManagerOpen(true);
+    dismissStyleNudge();
+    triggerStyleHighlight();
+  }, [dismissStyleNudge, triggerStyleHighlight]);
 
   const {
     messages,
@@ -238,6 +272,34 @@ function App() {
   const showPhase = currentPhase && (isDebating || wasStopped || isJudging);
   const phaseStatus = wasStopped ? 'paused' : isJudging ? 'judging' : '';
 
+  useEffect(() => {
+    if (!hasStarted) {
+      styleNudgeShownRef.current = false;
+      setIsStyleNudgeVisible(false);
+      setIsStyleNudgeDismissed(false);
+      setIsStyleHighlightActive(false);
+    }
+  }, [hasStarted]);
+
+  useEffect(() => {
+    const debateCompleted = currentPhase === 'Complete'
+      && !isDebating
+      && !isJudging
+      && !wasStopped;
+
+    if (debateCompleted) {
+      if (!styleNudgeShownRef.current && !isStyleNudgeDismissed) {
+        styleNudgeShownRef.current = true;
+        setIsStyleNudgeVisible(true);
+      }
+      return;
+    }
+
+    if (isDebating || wasStopped || isJudging) {
+      setIsStyleNudgeVisible(false);
+    }
+  }, [currentPhase, isDebating, isJudging, wasStopped, isStyleNudgeDismissed]);
+
   return (
     <div className={`app ${isLightMode ? 'light-mode' : ''}`}>
       <header className="app-header">
@@ -311,6 +373,7 @@ function App() {
             onSaveStyleDefaults={() => applyStyleDefaults(styleSelection)}
             onResetStyleSelection={() => setStyleSelection(styleDefaults)}
             onOpenStylesManager={() => setIsStylesManagerOpen(true)}
+            highlightStyles={isStyleHighlightActive}
             disabled={isConfigLocked}
           />
 
@@ -427,6 +490,12 @@ function App() {
           [roleKey]: styleId,
         })}
         onStylesUpdated={refreshStyles}
+      />
+
+      <StyleNudgeToast
+        visible={isStyleNudgeVisible}
+        onAction={handleStyleNudgeAction}
+        onDismiss={dismissStyleNudge}
       />
     </div>
   );

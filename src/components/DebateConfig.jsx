@@ -28,6 +28,7 @@ export function DebateConfig({
   onSaveStyleDefaults,
   onResetStyleSelection,
   onOpenStylesManager,
+  highlightStyles = false,
   disabled = false,
 }) {
   const styleMap = new Map(styles.map((style) => [style.id, style]));
@@ -110,7 +111,7 @@ export function DebateConfig({
             Manage styles
           </button>
         </div>
-        <div className="styles-selectors">
+        <div className={`styles-selectors ${highlightStyles ? 'highlight' : ''}`}>
           <div className={`style-selector pro ${getStatus('proStyleId')}`}>
             <div className="style-selector-header">
               <span className="style-role">Pro</span>
