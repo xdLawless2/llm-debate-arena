@@ -9,3 +9,5 @@
 [2026-01-19 21:37:20] Start US-001: add typecheck script/config (helper missing)
 [2026-01-19 21:40:28] Added tsconfig and typecheck script; installed typescript (helper missing)
 [2026-01-19 21:40:44] Ran verification: npm run typecheck, npm run lint, npm run build (helper missing)
+
+[2026-01-19 21:47:12] Updated progress log for US-001 (helper missing)
