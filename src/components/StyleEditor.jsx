@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { ROLE_DEFINITIONS } from './styleEditorConfig';
+
+const MIN_ROWS_SYSTEM = 16;
+const MIN_ROWS_STAGE = 12;
 
 export function StyleEditor({
   draft,
@@ -15,6 +18,24 @@ export function StyleEditor({
   onDelete,
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const editorRef = useRef(null);
+
+  const resizeTextarea = useCallback((textarea) => {
+    if (!textarea) {
+      return;
+    }
+    textarea.style.height = 'auto';
+    const borderSize = textarea.offsetHeight - textarea.clientHeight;
+    textarea.style.height = `${textarea.scrollHeight + borderSize}px`;
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!editorRef.current) {
+      return;
+    }
+    const textareas = editorRef.current.querySelectorAll('.style-editor-textarea');
+    textareas.forEach((textarea) => resizeTextarea(textarea));
+  }, [draft, resizeTextarea]);
 
   if (!draft) {
     return (
@@ -29,6 +50,11 @@ export function StyleEditor({
   const isEdit = mode === 'edit';
   const badgeLabel = mode === 'view' ? 'Built-in' : isCreate ? 'Draft' : 'Custom';
 
+  const handlePromptInput = (roleKey, fieldKey, event) => {
+    resizeTextarea(event.target);
+    onPromptChange?.(roleKey, fieldKey, event.target.value);
+  };
+
   const description = mode === 'view'
     ? 'Built-in styles are read-only. Remix to create an editable copy.'
     : isCreate
@@ -41,7 +67,7 @@ export function StyleEditor({
   };
 
   return (
-    <div className="style-editor-panel">
+    <div className="style-editor-panel" ref={editorRef}>
       <div className="style-editor-header">
         <div>
           <h3>{isCreate ? 'Create Custom Style' : draft.name || 'Style Editor'}</h3>
@@ -99,6 +125,8 @@ export function StyleEditor({
             <div className="style-editor-fields">
               {role.fields.map((field) => {
                 const fieldError = errors?.promptsByRole?.[role.key]?.[field.key];
+                const minRows = field.key === 'system' ? MIN_ROWS_SYSTEM : MIN_ROWS_STAGE;
+                const minHeight = `calc(${minRows} * 1.5em + 1.2rem)`;
                 return (
                   <div key={field.key} className={`style-editor-field ${fieldError ? 'error' : ''}`}>
                     <label htmlFor={`${role.key}-${field.key}`}>
@@ -109,11 +137,12 @@ export function StyleEditor({
                       id={`${role.key}-${field.key}`}
                       className="style-editor-textarea"
                       value={draft.promptsByRole?.[role.key]?.[field.key] ?? ''}
-                      onChange={(event) => onPromptChange?.(role.key, field.key, event.target.value)}
+                      onChange={(event) => handlePromptInput(role.key, field.key, event)}
                       placeholder={`Write the ${field.label.toLowerCase()}...`}
                       disabled={isReadOnly}
                       aria-invalid={Boolean(fieldError)}
-                      rows={field.key === 'system' ? 6 : 4}
+                      rows={minRows}
+                      style={{ minHeight }}
                     />
                     {fieldError && <span className="field-error">{fieldError}</span>}
                   </div>
