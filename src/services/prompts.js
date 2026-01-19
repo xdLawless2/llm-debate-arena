@@ -16,6 +16,38 @@ export const DEBATE_PRESETS = {
   },
 };
 
+const TEMPLATE_TOKEN_PATTERN = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
+
+export function renderPromptTemplate(template, values = {}) {
+  if (typeof template !== 'string') {
+    return '';
+  }
+
+  const safeValues = values && typeof values === 'object' ? values : {};
+
+  return template.replace(TEMPLATE_TOKEN_PATTERN, (_, key) => {
+    if (!Object.prototype.hasOwnProperty.call(safeValues, key)) {
+      return '';
+    }
+
+    const value = safeValues[key];
+    return value == null ? '' : String(value);
+  });
+}
+
+export function formatDebateHistory(debateHistory = []) {
+  if (!Array.isArray(debateHistory) || debateHistory.length === 0) {
+    return '';
+  }
+
+  return debateHistory.map((entry) => {
+    const speaker = entry.side === 'pro' ? 'PRO' : 'CON';
+    const phase = entry.phase === 'round' ? `Round ${entry.roundNumber}` : entry.phase;
+    const content = typeof entry.content === 'string' ? entry.content : '';
+    return `[${speaker} - ${phase}]\n${content}`;
+  }).join('\n\n---\n\n');
+}
+
 export function getDebaterSystemPrompt(side, topic, opponentName) {
   const position = side === 'pro' ? 'IN FAVOR OF' : 'AGAINST';
   const stance = side === 'pro' ? 'FOR' : 'AGAINST';

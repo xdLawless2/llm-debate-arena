@@ -1,18 +1,119 @@
 import { useState, useCallback, useRef } from 'react';
 import { streamCompletion } from '../services/openrouter';
 import {
-  getDebaterSystemPrompt,
-  getOpeningStatementPrompt,
-  getDebateRoundPrompt,
-  getRapidFirePrompt,
-  getClosingStatementPrompt,
-  getJudgeSystemPrompt,
-  getJudgeEvaluationPrompt,
-  RAPID_FIRE_QUESTIONS,
+  BUILT_IN_STYLES,
   DEBATE_PRESETS,
+  RAPID_FIRE_QUESTIONS,
+  formatDebateHistory,
+  renderPromptTemplate,
 } from '../services/prompts';
+import { DEFAULT_STYLE_DEFAULTS, getStyleById } from '../services/styleStorage';
 
 const isAbortError = (err) => err?.name === 'AbortError';
+
+const FALLBACK_STYLE = BUILT_IN_STYLES.flamboyant;
+
+const PHASE_PROMPT_KEYS = {
+  opening: 'opening',
+  round: 'round',
+  'rapid-fire': 'rapidFire',
+  closing: 'closing',
+};
+
+const normalizeStyleSelection = (selection) => {
+  const safeSelection = selection ?? {};
+  const getValue = (key) => (
+    typeof safeSelection[key] === 'string' ? safeSelection[key] : DEFAULT_STYLE_DEFAULTS[key]
+  );
+
+  return {
+    proStyleId: getValue('proStyleId'),
+    conStyleId: getValue('conStyleId'),
+    judgeStyleId: getValue('judgeStyleId'),
+  };
+};
+
+const resolvePromptTemplate = (style, roleKey, promptKey) => {
+  const template = style?.promptsByRole?.[roleKey]?.[promptKey];
+  if (typeof template === 'string' && template.trim()) {
+    return template;
+  }
+
+  const fallback = FALLBACK_STYLE.promptsByRole?.[roleKey]?.[promptKey];
+  return typeof fallback === 'string' ? fallback : '';
+};
+
+const buildDebaterPromptValues = (side, topic, opponentName, historyText, extras = {}) => {
+  const sideLabel = side === 'pro' ? 'PRO' : 'CON';
+  const stance = side === 'pro' ? 'FOR' : 'AGAINST';
+
+  return {
+    topic,
+    opponentName,
+    side: sideLabel,
+    stance,
+    roundNumber: extras.roundNumber ?? '',
+    opponentArgument: extras.opponentArgument ?? '',
+    question: extras.question ?? '',
+    debateHistory: historyText,
+  };
+};
+
+const buildJudgePromptValues = (topic, historyText) => ({
+  topic,
+  debateHistory: historyText,
+});
+
+const createPromptBuilder = ({ topic, proModel, conModel, styleSelection }) => {
+  const styles = {
+    pro: getStyleById(styleSelection.proStyleId),
+    con: getStyleById(styleSelection.conStyleId),
+    judge: getStyleById(styleSelection.judgeStyleId),
+  };
+
+  const renderDebaterPrompt = (side, promptKey, historyText, extras) => {
+    const template = resolvePromptTemplate(styles[side], side, promptKey);
+    const opponentName = side === 'pro' ? conModel : proModel;
+    return renderPromptTemplate(
+      template,
+      buildDebaterPromptValues(side, topic, opponentName, historyText, extras)
+    );
+  };
+
+  const renderJudgePrompt = (promptKey, historyText) => {
+    const template = resolvePromptTemplate(styles.judge, 'judge', promptKey);
+    return renderPromptTemplate(template, buildJudgePromptValues(topic, historyText));
+  };
+
+  return {
+    getDebaterSystemPrompt: (side, historyText) => renderDebaterPrompt(side, 'system', historyText),
+    getDebaterPhasePrompt: (side, phase, historyText, extras = {}) => {
+      const promptKey = PHASE_PROMPT_KEYS[phase];
+      if (!promptKey) {
+        return '';
+      }
+      return renderDebaterPrompt(side, promptKey, historyText, extras);
+    },
+    getJudgeSystemPrompt: (historyText) => renderJudgePrompt('system', historyText),
+    getJudgeEvaluationPrompt: (historyText) => renderJudgePrompt('evaluation', historyText),
+  };
+};
+
+const buildDebaterPromptPair = (promptBuilder, debateHistory, side, phase, extras = {}) => {
+  const historyText = formatDebateHistory(debateHistory);
+  return {
+    system: promptBuilder.getDebaterSystemPrompt(side, historyText),
+    user: promptBuilder.getDebaterPhasePrompt(side, phase, historyText, extras),
+  };
+};
+
+const buildJudgePromptPair = (promptBuilder, debateHistory) => {
+  const historyText = formatDebateHistory(debateHistory);
+  return {
+    system: promptBuilder.getJudgeSystemPrompt(historyText),
+    user: promptBuilder.getJudgeEvaluationPrompt(historyText),
+  };
+};
 
 export function useDebate() {
   const [messages, setMessages] = useState([]);
@@ -160,6 +261,7 @@ export function useDebate() {
       judgeThinking,
       preset,
       customRounds,
+      styleSelection,
     } = config;
 
     if (!apiKey || !topic) {
@@ -174,15 +276,20 @@ export function useDebate() {
     setVerdict(null);
     setError(null);
     setWasStopped(false);
-    setStoppedConfig(config);
+    const styleSelectionSnapshot = normalizeStyleSelection(styleSelection);
+    const runConfig = { ...config, styleSelection: styleSelectionSnapshot };
+    setStoppedConfig(runConfig);
     setStreamingMessage(null);
     setIsJudging(false);
     setCurrentPhase(null);
 
     const rounds = preset === 'custom' ? customRounds : DEBATE_PRESETS[preset].rounds;
-
-    const proSystemPrompt = getDebaterSystemPrompt('pro', topic, conModel);
-    const conSystemPrompt = getDebaterSystemPrompt('con', topic, proModel);
+    const promptBuilder = createPromptBuilder({
+      topic,
+      proModel,
+      conModel,
+      styleSelection: styleSelectionSnapshot,
+    });
 
     const debateHistory = [];
 
@@ -191,27 +298,39 @@ export function useDebate() {
       if (!isActiveRun(runId)) return;
       setCurrentPhase('Opening Statements');
 
+      const proOpeningPrompts = buildDebaterPromptPair(
+        promptBuilder,
+        debateHistory,
+        'pro',
+        'opening'
+      );
       const proOpening = await runDebaterTurn(
         runId,
         apiKey,
         proModel,
         'pro',
         'opening',
-        proSystemPrompt,
-        getOpeningStatementPrompt('pro', topic),
+        proOpeningPrompts.system,
+        proOpeningPrompts.user,
         { thinking: proThinking }
       );
       if (!proOpening || !isActiveRun(runId)) return;
       debateHistory.push(proOpening);
 
+      const conOpeningPrompts = buildDebaterPromptPair(
+        promptBuilder,
+        debateHistory,
+        'con',
+        'opening'
+      );
       const conOpening = await runDebaterTurn(
         runId,
         apiKey,
         conModel,
         'con',
         'opening',
-        conSystemPrompt,
-        getOpeningStatementPrompt('con', topic),
+        conOpeningPrompts.system,
+        conOpeningPrompts.user,
         { thinking: conThinking }
       );
       if (!conOpening || !isActiveRun(runId)) return;
@@ -225,28 +344,42 @@ export function useDebate() {
         if (!isActiveRun(runId)) return;
         setCurrentPhase(`Round ${i} of ${rounds}`);
 
+        const proRoundPrompts = buildDebaterPromptPair(
+          promptBuilder,
+          debateHistory,
+          'pro',
+          'round',
+          { roundNumber: i, opponentArgument: lastConArg }
+        );
         const proRound = await runDebaterTurn(
           runId,
           apiKey,
           proModel,
           'pro',
           'round',
-          proSystemPrompt,
-          getDebateRoundPrompt('pro', i, lastConArg),
+          proRoundPrompts.system,
+          proRoundPrompts.user,
           { roundNumber: i, thinking: proThinking }
         );
         if (!proRound || !isActiveRun(runId)) return;
         debateHistory.push(proRound);
         lastProArg = proRound.content;
 
+        const conRoundPrompts = buildDebaterPromptPair(
+          promptBuilder,
+          debateHistory,
+          'con',
+          'round',
+          { roundNumber: i, opponentArgument: lastProArg }
+        );
         const conRound = await runDebaterTurn(
           runId,
           apiKey,
           conModel,
           'con',
           'round',
-          conSystemPrompt,
-          getDebateRoundPrompt('con', i, lastProArg),
+          conRoundPrompts.system,
+          conRoundPrompts.user,
           { roundNumber: i, thinking: conThinking }
         );
         if (!conRound || !isActiveRun(runId)) return;
@@ -260,27 +393,41 @@ export function useDebate() {
       for (const question of RAPID_FIRE_QUESTIONS.slice(0, 3)) {
         if (!isActiveRun(runId)) return;
 
+        const proRapidPrompts = buildDebaterPromptPair(
+          promptBuilder,
+          debateHistory,
+          'pro',
+          'rapid-fire',
+          { question }
+        );
         const proRapid = await runDebaterTurn(
           runId,
           apiKey,
           proModel,
           'pro',
           'rapid-fire',
-          proSystemPrompt,
-          getRapidFirePrompt('pro', question),
+          proRapidPrompts.system,
+          proRapidPrompts.user,
           { thinking: proThinking }
         );
         if (!proRapid || !isActiveRun(runId)) return;
         debateHistory.push(proRapid);
 
+        const conRapidPrompts = buildDebaterPromptPair(
+          promptBuilder,
+          debateHistory,
+          'con',
+          'rapid-fire',
+          { question }
+        );
         const conRapid = await runDebaterTurn(
           runId,
           apiKey,
           conModel,
           'con',
           'rapid-fire',
-          conSystemPrompt,
-          getRapidFirePrompt('con', question),
+          conRapidPrompts.system,
+          conRapidPrompts.user,
           { thinking: conThinking }
         );
         if (!conRapid || !isActiveRun(runId)) return;
@@ -290,27 +437,39 @@ export function useDebate() {
       // Closing Statements
       setCurrentPhase('Closing Statements');
 
+      const proClosingPrompts = buildDebaterPromptPair(
+        promptBuilder,
+        debateHistory,
+        'pro',
+        'closing'
+      );
       const proClosing = await runDebaterTurn(
         runId,
         apiKey,
         proModel,
         'pro',
         'closing',
-        proSystemPrompt,
-        getClosingStatementPrompt('pro', topic),
+        proClosingPrompts.system,
+        proClosingPrompts.user,
         { thinking: proThinking }
       );
       if (!proClosing || !isActiveRun(runId)) return;
       debateHistory.push(proClosing);
 
+      const conClosingPrompts = buildDebaterPromptPair(
+        promptBuilder,
+        debateHistory,
+        'con',
+        'closing'
+      );
       const conClosing = await runDebaterTurn(
         runId,
         apiKey,
         conModel,
         'con',
         'closing',
-        conSystemPrompt,
-        getClosingStatementPrompt('con', topic),
+        conClosingPrompts.system,
+        conClosingPrompts.user,
         { thinking: conThinking }
       );
       if (!conClosing || !isActiveRun(runId)) return;
@@ -322,6 +481,7 @@ export function useDebate() {
       setIsJudging(true);
       setVerdict('');
 
+      const judgePrompts = buildJudgePromptPair(promptBuilder, debateHistory);
       const controller = createRequestController();
       let judgeResult;
       try {
@@ -329,8 +489,8 @@ export function useDebate() {
           apiKey,
           judgeModel,
           [
-            { role: 'system', content: getJudgeSystemPrompt() },
-            { role: 'user', content: getJudgeEvaluationPrompt(topic, debateHistory) },
+            { role: 'system', content: judgePrompts.system },
+            { role: 'user', content: judgePrompts.user },
           ],
           (content) => {
             if (!isActiveRun(runId)) return;
@@ -400,6 +560,7 @@ export function useDebate() {
       judgeThinking,
       preset,
       customRounds,
+      styleSelection,
     } = stoppedConfig;
 
     const runId = startRun();
@@ -411,8 +572,13 @@ export function useDebate() {
     setIsJudging(false);
 
     const rounds = preset === 'custom' ? customRounds : DEBATE_PRESETS[preset].rounds;
-    const proSystemPrompt = getDebaterSystemPrompt('pro', topic, conModel);
-    const conSystemPrompt = getDebaterSystemPrompt('con', topic, proModel);
+    const styleSelectionSnapshot = normalizeStyleSelection(styleSelection);
+    const promptBuilder = createPromptBuilder({
+      topic,
+      proModel,
+      conModel,
+      styleSelection: styleSelectionSnapshot,
+    });
 
     // Analyze current messages to determine where we are
     const currentMessages = [...messages];
@@ -520,11 +686,17 @@ export function useDebate() {
         setCurrentPhase('Opening Statements');
 
         if (resumeSide === 'pro') {
+          const proOpeningPrompts = buildDebaterPromptPair(
+            promptBuilder,
+            debateHistory,
+            'pro',
+            'opening'
+          );
           const proOpening = await runDebaterTurn(
             runId,
             apiKey, proModel, 'pro', 'opening',
-            proSystemPrompt,
-            getOpeningStatementPrompt('pro', topic),
+            proOpeningPrompts.system,
+            proOpeningPrompts.user,
             { thinking: proThinking }
           );
           if (!proOpening || !isActiveRun(runId)) return;
@@ -534,11 +706,17 @@ export function useDebate() {
         }
 
         if (resumeSide === 'con') {
+          const conOpeningPrompts = buildDebaterPromptPair(
+            promptBuilder,
+            debateHistory,
+            'con',
+            'opening'
+          );
           const conOpening = await runDebaterTurn(
             runId,
             apiKey, conModel, 'con', 'opening',
-            conSystemPrompt,
-            getOpeningStatementPrompt('con', topic),
+            conOpeningPrompts.system,
+            conOpeningPrompts.user,
             { thinking: conThinking }
           );
           if (!conOpening || !isActiveRun(runId)) return;
@@ -560,11 +738,18 @@ export function useDebate() {
           const startSide = (i === resumeRound) ? resumeSide : 'pro';
 
           if (startSide === 'pro') {
+            const proRoundPrompts = buildDebaterPromptPair(
+              promptBuilder,
+              debateHistory,
+              'pro',
+              'round',
+              { roundNumber: i, opponentArgument: lastConArg }
+            );
             const proRound = await runDebaterTurn(
               runId,
               apiKey, proModel, 'pro', 'round',
-              proSystemPrompt,
-              getDebateRoundPrompt('pro', i, lastConArg),
+              proRoundPrompts.system,
+              proRoundPrompts.user,
               { roundNumber: i, thinking: proThinking }
             );
             if (!proRound || !isActiveRun(runId)) return;
@@ -572,11 +757,18 @@ export function useDebate() {
             lastProArg = proRound.content;
           }
 
+          const conRoundPrompts = buildDebaterPromptPair(
+            promptBuilder,
+            debateHistory,
+            'con',
+            'round',
+            { roundNumber: i, opponentArgument: lastProArg }
+          );
           const conRound = await runDebaterTurn(
             runId,
             apiKey, conModel, 'con', 'round',
-            conSystemPrompt,
-            getDebateRoundPrompt('con', i, lastProArg),
+            conRoundPrompts.system,
+            conRoundPrompts.user,
             { roundNumber: i, thinking: conThinking }
           );
           if (!conRound || !isActiveRun(runId)) return;
@@ -600,22 +792,36 @@ export function useDebate() {
           const startSide = (qi === resumeRapidFireIndex) ? resumeSide : 'pro';
 
           if (startSide === 'pro') {
+            const proRapidPrompts = buildDebaterPromptPair(
+              promptBuilder,
+              debateHistory,
+              'pro',
+              'rapid-fire',
+              { question }
+            );
             const proRapid = await runDebaterTurn(
               runId,
               apiKey, proModel, 'pro', 'rapid-fire',
-              proSystemPrompt,
-              getRapidFirePrompt('pro', question),
+              proRapidPrompts.system,
+              proRapidPrompts.user,
               { thinking: proThinking }
             );
             if (!proRapid || !isActiveRun(runId)) return;
             debateHistory.push(proRapid);
           }
 
+          const conRapidPrompts = buildDebaterPromptPair(
+            promptBuilder,
+            debateHistory,
+            'con',
+            'rapid-fire',
+            { question }
+          );
           const conRapid = await runDebaterTurn(
             runId,
             apiKey, conModel, 'con', 'rapid-fire',
-            conSystemPrompt,
-            getRapidFirePrompt('con', question),
+            conRapidPrompts.system,
+            conRapidPrompts.user,
             { thinking: conThinking }
           );
           if (!conRapid || !isActiveRun(runId)) return;
@@ -632,11 +838,17 @@ export function useDebate() {
         setCurrentPhase('Closing Statements');
 
         if (resumeSide === 'pro') {
+          const proClosingPrompts = buildDebaterPromptPair(
+            promptBuilder,
+            debateHistory,
+            'pro',
+            'closing'
+          );
           const proClosing = await runDebaterTurn(
             runId,
             apiKey, proModel, 'pro', 'closing',
-            proSystemPrompt,
-            getClosingStatementPrompt('pro', topic),
+            proClosingPrompts.system,
+            proClosingPrompts.user,
             { thinking: proThinking }
           );
           if (!proClosing || !isActiveRun(runId)) return;
@@ -645,11 +857,17 @@ export function useDebate() {
         }
 
         if (resumeSide === 'con') {
+          const conClosingPrompts = buildDebaterPromptPair(
+            promptBuilder,
+            debateHistory,
+            'con',
+            'closing'
+          );
           const conClosing = await runDebaterTurn(
             runId,
             apiKey, conModel, 'con', 'closing',
-            conSystemPrompt,
-            getClosingStatementPrompt('con', topic),
+            conClosingPrompts.system,
+            conClosingPrompts.user,
             { thinking: conThinking }
           );
           if (!conClosing || !isActiveRun(runId)) return;
@@ -668,6 +886,7 @@ export function useDebate() {
 
         // Use all messages for judging (current + newly added)
         const allMessages = [...existingMessages, ...debateHistory.filter(m => !existingMessages.find(em => em.id === m.id))];
+        const judgePrompts = buildJudgePromptPair(promptBuilder, allMessages);
 
         const controller = createRequestController();
         let judgeResult;
@@ -676,8 +895,8 @@ export function useDebate() {
             apiKey,
             judgeModel,
             [
-              { role: 'system', content: getJudgeSystemPrompt() },
-              { role: 'user', content: getJudgeEvaluationPrompt(topic, allMessages) },
+              { role: 'system', content: judgePrompts.system },
+              { role: 'user', content: judgePrompts.user },
             ],
             (content) => {
               if (!isActiveRun(runId)) return;
