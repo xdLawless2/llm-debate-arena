@@ -28,7 +28,6 @@ export function DebateConfig({
   onSaveStyleDefaults,
   onResetStyleSelection,
   onOpenStylesManager,
-  highlightStyles = false,
   disabled = false,
 }) {
   const styleMap = new Map(styles.map((style) => [style.id, style]));
@@ -107,11 +106,12 @@ export function DebateConfig({
             className="styles-manage-btn"
             onClick={onOpenStylesManager}
             disabled={disabled}
+            data-tooltip="Edit tone presets for Pro, Con, and Judge."
           >
             Manage styles
           </button>
         </div>
-        <div className={`styles-selectors ${highlightStyles ? 'highlight' : ''}`}>
+        <div className="styles-selectors">
           <div className={`style-selector pro ${getStatus('proStyleId')}`}>
             <div className="style-selector-header">
               <span className="style-role">Pro</span>
