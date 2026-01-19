@@ -55,3 +55,27 @@ Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-1
   - Gotchas encountered: use the ralph binary in PATH instead of /Users/adityasingh/Desktop/debate/ralph.
   - Useful context: judge evaluation templates accept {{debateHistory}} placeholders for future replacement.
 ---
+## [2026-01-19 22:08:52] - US-003: Persist custom styles and default role assignments
+Thread: 
+Run: 20260119-213615-12163 (iteration 3)
+Run log: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-12163-iter-3.log
+Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260119-213615-12163-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: bad2d69 feat(styles): add style storage helpers
+- Post-commit status: clean
+- Verification:
+  - Command: npm run lint -> PASS
+  - Command: npm run typecheck -> PASS
+  - Command: npm run build -> PASS
+  - Command: npm run dev -> PASS
+- Files changed:
+  - .ralph/activity.log
+  - .ralph/progress.md
+  - src/services/styleStorage.js
+- What was implemented: Added localStorage-backed helpers for custom styles and default style ids with built-in merge and conflict protection.
+- **Learnings for future iterations:**
+  - Patterns discovered: new style storage keys live alongside built-in prompt helpers.
+  - Gotchas encountered: use the ralph binary in PATH instead of /Users/adityasingh/Desktop/debate/ralph.
+  - Useful context: defaults fall back to flamboyant when storage is missing or invalid.
+---
