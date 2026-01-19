@@ -1,6 +1,7 @@
 # Activity Log
 
 ## Run Summary
+- 2026-01-19 22:10:29 | run=20260119-213615-12163 | iter=3 | mode=build | story=US-003 | duration=685s | status=success
 - 2026-01-19 21:59:02 | run=20260119-213615-12163 | iter=2 | mode=build | story=US-002 | duration=603s | status=success
 - 2026-01-19 21:48:57 | run=20260119-213615-12163 | iter=1 | mode=build | story=US-001 | duration=762s | status=success
 
@@ -24,3 +25,9 @@
 [2026-01-19 22:05:07] Added style storage helpers for custom styles and defaults
 [2026-01-19 22:05:57] Completed lint/typecheck/build/dev verification for US-003
 [2026-01-19 22:09:18] Updated progress log for US-003
+[2026-01-19 22:10:29] ITERATION 3 end (duration=685s)
+[2026-01-19 22:10:32] ITERATION 4 start (mode=build story=US-004)
+[2026-01-19 22:11:14] Start US-004 work: reviewing existing styles selector and manager UI
+[2026-01-19 22:23:59] Implemented debate style selectors, defaults actions, and styles manager UI
+[2026-01-19 22:27:41] Verification complete: lint/typecheck/build + browser UI check
+[2026-01-19 22:28:40] Start US-004 work (late log due to missing local helper path)

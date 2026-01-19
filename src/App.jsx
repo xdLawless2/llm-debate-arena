@@ -1,10 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Swords, Play, Square, RotateCcw, AlertCircle, Copy, Check, Sparkles, Shield, Users, Brain, Landmark, Zap, Info, Sun, Moon, FastForward, Pause } from 'lucide-react';
 import { ApiKeyInput } from './components/ApiKeyInput';
 import { DebateConfig } from './components/DebateConfig';
 import { DebateMessage } from './components/DebateMessage';
 import { JudgeVerdict } from './components/JudgeVerdict';
+import { StylesManager } from './components/StylesManager';
 import { useDebate } from './hooks/useDebate';
+import { DEFAULT_STYLE_DEFAULTS, getStyleDefaults, listAllStyles, saveStyleDefaults } from './services/styleStorage';
 import './App.css';
 
 const readStoredValue = (key, fallback = '') => {
@@ -33,6 +35,17 @@ const SUGGESTED_TOPICS = [
   { icon: Sparkles, label: 'Space Colonization', desc: 'Should we prioritize settling Mars?' },
 ];
 
+const normalizeStyleSelection = (selection, styleMap) => {
+  const safeSelection = selection ?? {};
+  const getValidId = (value, fallback) => (styleMap.has(value) ? value : fallback);
+
+  return {
+    proStyleId: getValidId(safeSelection.proStyleId, DEFAULT_STYLE_DEFAULTS.proStyleId),
+    conStyleId: getValidId(safeSelection.conStyleId, DEFAULT_STYLE_DEFAULTS.conStyleId),
+    judgeStyleId: getValidId(safeSelection.judgeStyleId, DEFAULT_STYLE_DEFAULTS.judgeStyleId),
+  };
+};
+
 function App() {
   const [apiKey, setApiKey] = useState(() =>
     readStoredValue('openrouter_api_key', '')
@@ -54,6 +67,19 @@ function App() {
   const [customRounds, setCustomRounds] = useState(4);
   const [copied, setCopied] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
+  const [isStylesManagerOpen, setIsStylesManagerOpen] = useState(false);
+
+  const allStyles = useMemo(() => listAllStyles(), []);
+  const styleMap = useMemo(
+    () => new Map(allStyles.map((style) => [style.id, style])),
+    [allStyles]
+  );
+  const [styleDefaults, setStyleDefaults] = useState(() =>
+    normalizeStyleSelection(getStyleDefaults(), styleMap)
+  );
+  const [styleSelection, setStyleSelection] = useState(() =>
+    normalizeStyleSelection(getStyleDefaults(), styleMap)
+  );
 
   useEffect(() => {
     writeStoredValue('openrouter_api_key', apiKey);
@@ -70,6 +96,34 @@ function App() {
   useEffect(() => {
     writeStoredValue('debate_judge_model', judgeModel);
   }, [judgeModel]);
+
+  const handleStyleChange = useCallback((roleKey, nextStyleId) => {
+    if (!styleMap.has(nextStyleId)) {
+      return;
+    }
+    setStyleSelection((prev) => ({
+      ...prev,
+      [roleKey]: nextStyleId,
+    }));
+  }, [styleMap]);
+
+  const applyStyleDefaults = useCallback((nextDefaults) => {
+    const normalizedDefaults = normalizeStyleSelection(nextDefaults, styleMap);
+    setStyleDefaults(normalizedDefaults);
+    saveStyleDefaults(normalizedDefaults);
+
+    setStyleSelection((current) => ({
+      proStyleId: current.proStyleId === styleDefaults.proStyleId
+        ? normalizedDefaults.proStyleId
+        : current.proStyleId,
+      conStyleId: current.conStyleId === styleDefaults.conStyleId
+        ? normalizedDefaults.conStyleId
+        : current.conStyleId,
+      judgeStyleId: current.judgeStyleId === styleDefaults.judgeStyleId
+        ? normalizedDefaults.judgeStyleId
+        : current.judgeStyleId,
+    }));
+  }, [styleDefaults, styleMap]);
 
   const {
     messages,
@@ -98,6 +152,7 @@ function App() {
       judgeThinking,
       preset,
       customRounds,
+      styleSelection,
     });
   };
 
@@ -230,6 +285,13 @@ function App() {
             setPreset={setPreset}
             customRounds={customRounds}
             setCustomRounds={setCustomRounds}
+            styles={allStyles}
+            styleSelection={styleSelection}
+            styleDefaults={styleDefaults}
+            onStyleChange={handleStyleChange}
+            onSaveStyleDefaults={() => applyStyleDefaults(styleSelection)}
+            onResetStyleSelection={() => setStyleSelection(styleDefaults)}
+            onOpenStylesManager={() => setIsStylesManagerOpen(true)}
             disabled={isConfigLocked}
           />
 
@@ -334,6 +396,17 @@ function App() {
           </div>
         </section>
       </main>
+
+      <StylesManager
+        open={isStylesManagerOpen}
+        onClose={() => setIsStylesManagerOpen(false)}
+        disabled={isConfigLocked}
+        styleDefaults={styleDefaults}
+        onSetDefaults={(roleKey, styleId) => applyStyleDefaults({
+          ...styleDefaults,
+          [roleKey]: styleId,
+        })}
+      />
     </div>
   );
 }
