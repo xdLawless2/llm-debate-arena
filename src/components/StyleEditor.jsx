@@ -56,10 +56,10 @@ export function StyleEditor({
   };
 
   const description = mode === 'view'
-    ? 'Built-in styles are read-only. Remix to create an editable copy.'
+    ? 'Read-only. Remix to create an editable copy.'
     : isCreate
-      ? `Remix of ${baseStyleName || 'a built-in style'}.`
-      : 'Edit prompts and rename your custom style.';
+      ? `Based on ${baseStyleName || 'a built-in style'}.`
+      : 'Edit and customize your style.';
 
   const handleDeleteConfirm = () => {
     setConfirmingDelete(false);

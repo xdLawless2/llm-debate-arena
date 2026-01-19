@@ -248,7 +248,6 @@ export function StylesManager({
             <div className="styles-list-header">
               <div>
                 <h3>Styles Library</h3>
-                <p>Browse built-in presets and custom edits.</p>
               </div>
               <button
                 type="button"
@@ -274,9 +273,11 @@ export function StylesManager({
                       {style.builtIn ? 'Built-in' : 'Custom'}
                     </span>
                   </div>
-                  <p className="style-card-desc">
-                    {style.description || (style.builtIn ? 'Built-in style preset.' : 'Custom style draft.')}
-                  </p>
+                  {style.description && (
+                    <p className="style-card-desc">
+                      {style.description}
+                    </p>
+                  )}
                   <div className="style-card-actions">
                     <button
                       type="button"
