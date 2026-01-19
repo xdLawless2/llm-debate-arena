@@ -1022,7 +1022,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  min-height: 172px;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
@@ -1175,7 +1174,7 @@ body {
 }
 
 .style-editor-panel {
-  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-base) 100%);
+  background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 1.5rem;
@@ -1355,15 +1354,17 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  align-items: center;
   justify-content: flex-end;
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
   margin-top: auto;
   padding: 1rem 0 0.75rem;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, var(--bg-base) 35%, var(--bg-base) 100%);
-  border-top: 1px solid var(--border-subtle);
-  box-shadow: 0 -12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.delete-confirm-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--con);
+  margin-right: auto;
 }
 
 .style-editor-actions .styles-action-btn {

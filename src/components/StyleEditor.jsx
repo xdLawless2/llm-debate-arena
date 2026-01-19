@@ -78,11 +78,6 @@ export function StyleEditor({
         </span>
       </div>
 
-      {mode === 'view' && (
-        <div className="style-editor-banner">
-          Built-in styles cannot be edited or deleted.
-        </div>
-      )}
 
       <div className="style-editor-meta">
         <div className={`style-editor-field ${errors?.name ? 'error' : ''}`}>
@@ -159,7 +154,7 @@ export function StyleEditor({
             Cancel draft
           </button>
         )}
-        {(isCreate || isEdit) && (
+        {(isCreate || isEdit) && !confirmingDelete && (
           <button type="button" className="styles-action-btn primary" onClick={onSave} disabled={disabled}>
             {isCreate ? 'Save style' : 'Save changes'}
           </button>
@@ -175,24 +170,18 @@ export function StyleEditor({
             Delete style
           </button>
         )}
-      </div>
-
-      {isEdit && confirmingDelete && (
-        <div className="style-delete-confirmation">
-          <div>
-            <strong>Delete this style?</strong>
-            <p>This cannot be undone and will remove it from selectors.</p>
-          </div>
-          <div className="style-delete-actions">
+        {isEdit && confirmingDelete && (
+          <>
+            <span className="delete-confirm-text">Delete this style?</span>
             <button type="button" className="styles-action-btn danger" onClick={handleDeleteConfirm} disabled={disabled}>
-              Confirm delete
+              Confirm
             </button>
             <button type="button" className="styles-action-btn ghost" onClick={() => setConfirmingDelete(false)} disabled={disabled}>
               Cancel
             </button>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

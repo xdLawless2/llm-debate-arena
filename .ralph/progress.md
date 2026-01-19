@@ -306,3 +306,26 @@ Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-010053-1
   - Gotchas encountered: Vite dev server auto-incremented to port 5174 when 5173 was occupied.
   - Useful context: Triggering Save on an empty draft surfaces `.field-error` for validation visibility checks.
 ---
+## [2026-01-20 02:01:11] - US-001: Remove misplaced horizontal bar in popup
+Thread:
+Run: 20260120-020111-6200 (iteration 1)
+Run log: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-020111-6200-iter-1.log
+Run summary: /Users/adityasingh/Desktop/debate/.ralph/runs/run-20260120-020111-6200-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cc91a65 fix(styles-manager): remove horizontal scrollbar from popup
+- Post-commit status: clean
+- Verification:
+  - Command: npm run lint -> PASS
+  - Command: npm run typecheck -> PASS
+  - Command: npm run build -> PASS
+  - Browser verification: dev-browser -> PASS (no horizontal scrollbar visible, vertical scrolling functional)
+- Files changed:
+  - src/App.css
+  - .ralph/activity.log
+- What was implemented: Fixed misplaced horizontal scrollbar in Style Manager popup by changing overflow from 'auto' to explicit directional overflow (overflow-x: hidden, overflow-y: auto) for .styles-list-scroll and .style-editor-panel; verified in dev-browser that horizontal scrollbar is removed while vertical scrolling remains functional.
+- **Learnings for future iterations:**
+  - Patterns discovered: Style Manager scrolling containers (.styles-list-scroll and .style-editor-panel) should use directional overflow properties to prevent unwanted horizontal scrollbars.
+  - Gotchas encountered: dev-browser server was already running on port 9222; Vite dev server started successfully on default port 5173.
+  - Useful context: Browser verification confirmed all acceptance criteria: no horizontal bar visible, vertical scrolling functional, vertical scrollbars remain visible and usable.
+---
