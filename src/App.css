@@ -885,7 +885,7 @@ body {
 
 .styles-manager-panel {
   width: min(1100px, 94vw);
-  max-height: 85vh;
+  max-height: 90vh;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: 18px;
@@ -940,6 +940,7 @@ body {
   gap: 1.25rem;
   overflow: hidden;
   min-height: 0;
+  flex: 1;
 }
 
 .styles-list-panel {
@@ -1005,6 +1006,8 @@ body {
   gap: 0.75rem;
   overflow: auto;
   padding-right: 0.25rem;
+  flex: 1;
+  min-height: 0;
 }
 
 .style-card {
@@ -2204,6 +2207,16 @@ body {
 
   .styles-manager-body {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .styles-manager-panel {
+    height: 90vh;
+  }
+
+  .styles-manager-body {
+    min-height: 70vh;
   }
 }
 
